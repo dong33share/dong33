@@ -782,8 +782,9 @@ document.getElementById('popup').addEventListener('click', function(e) {
 });
 
 async function submitEmail() {
-  const name = document.getElementById('popup-name').value.trim();
+  const name  = document.getElementById('popup-name').value.trim();
   const email = document.getElementById('popup-email').value.trim();
+
   if (!email || !email.includes('@')) {
     document.getElementById('popup-email').focus();
     document.getElementById('popup-email').style.borderColor = '#e05a00';
@@ -791,18 +792,31 @@ async function submitEmail() {
   }
   document.getElementById('popup-email').style.borderColor = '';
 
-  // Submit to Google Sheets
+  const btn = document.querySelector('.popup-submit');
+  btn.disabled = true;
+  btn.textContent = 'Đang gửi...';
+
+  // GET + URL params — cách duy nhất reliable với Apps Script cross-origin
+  const params = new URLSearchParams({
+    name:      name || '(khong dien)',
+    email:     email,
+    ebook:     currentEbook,
+    timestamp: new Date().toISOString()
+  });
+
   try {
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, ebook: currentEbook, timestamp: new Date().toISOString() })
+    await fetch(SHEET_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode:   'no-cors'
     });
-  } catch(e) { /* silent fail - still show success */ }
+  } catch(e) {
+    console.warn('Fetch error:', e);
+  }
 
   document.getElementById('popup-form-view').style.display = 'none';
   document.getElementById('popup-success-view').style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = 'Báo tôi khi có tài liệu →';
 }
 </script>
 </body>
